@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <title></title>
+    <link href="css/mui.min.css" rel="stylesheet" />
+    <style type="text/css">
+        .container {
+            width: 100%;
+            height: 300px;
+            background-color: #007AFF;
+            color: #FFFFFF;
+        }
+
+        .container>div {
+            width: 100%;
+            height: 50%;
+            font-size: 20px;
+        }
+
+        #word1 {
+            border-bottom: 1px solid #FFFFFF;
+        }
+
+        button {
+            width: 200px;
+            height: 40px;
+            vertical-align: middle;
+            display: block;
+            margin: 30px auto;
+            background-color: #6641E2;
+            color: #FFFFFF;
+            font-size: 24px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="word1"></div>
+        <div id="word2"></div>
+    </div>
+    <button id="btn_token">token</button>
+    <button id="btn_shibie">识别</button>
+    <button id="btn_stop">停止</button>
+    <script src="js/mui.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        mui.init({
+            gestureConfig: {
+                tap: true, //默认为true
+                doubletap: true, //默认为false
+                longtap: true, //默认为false
+                swipe: true, //默认为true
+                drag: true, //默认为true
+                hold: false, //默认为false，不监听
+                release: true //默认为false，不监听
+            }
+        });
+
+        var btn_token = document.getElementById("btn_token");
+        var btn_shibie = document.getElementById("btn_shibie");
+        var btn_stop = document.getElementById("btn_stop");
+
+        var word1 = document.getElementById("word1");
+        var word2 = document.getElementById("word2");
+
+        // 扩展API加载完毕后调用onPlusReady回调函数 ----
+        document.addEventListener("plusready", onPlusReady, false);
+        var r = null;
+        // 扩展API加载完毕，现在可以正常调用扩展API 
+        function onPlusReady() {
+            r = plus.audio.getRecorder();
+        }
+
+        function startRecord() {
+            if (r == null) {
+                console.log("Device not ready!");
+                return;
+            }
+            r.record({
+                filename: "_doc/audio/"
+            }, function (path) {
+                var arr = Audio2dataURL(path);
+                console.log("Audio record success!");
+            }, function (e) {
+                console.log("Audio record failed: " + e.message);
+            });
+        }
+
+        function stopRecord() {
+            r.stop();
+        }
+        /**
+         * 录音语音文件转base64字符串
+         * @param {Object} path
+         */
+        function Audio2dataURL(path) {
+            var urlArr = [];
+            plus.io.resolveLocalFileSystemURL(path, function (entry) {
+                entry.file(function (file) {
+                    var reader = new plus.io.FileReader();
+                    reader.onloadend = function (e) {
+                        var urlStr = e.target.result;
+                        console.log(urlStr);
+                        urlArr = urlStr.split(",");
+                    };
+                    reader.readAsDataURL(file);
+                }, function (e) {
+                    mui.toast("读写出现异常: " + e.message);
+                })
+            })
+            return urlArr;
+        }
+        // 将base64 传给服务器，进行识别
+        function sendBaseUrl() {
+            mui.ajax('http://vop.baidu.com/server_api', {
+                data: {
+                    grant_type: 'client_credentials',
+                    client_id: "NCwqRuOF1FIFn08u0hEbnQbY",
+                    client_secret: "y3qlD48qziNSkwnggI76G7CIYtH3otaw",
+                },
+                dataType: 'json', //服务器返回json格式数据
+                type: 'post', //HTTP请求类型
+                timeout: 10000, //超时时间设置为10秒；
+                success: function (data) {
+                    //服务器返回响应，根据响应结果，分析是否登录成功；
+                    console.log("识别success");
+
+                },
+                error: function (xhr, type, errorThrown) {
+                    //异常处理；
+                    console.log(type);
+                    console.log(errorThrown);
+					console.log("识别fail");
+                }
+            });
+        }
+
+
+        btn_shibie.addEventListener("longtap", function () {
+            startRecord();
+            console.log("audio_running");
+        })
+
+        btn_stop.addEventListener("tap", function () {
+            stopRecord();
+            console.log("audio_stop");
+        })
+
+        //获取 success token ----- 
+        btn_token.addEventListener("tap", function () {
+            mui.ajax('https://openapi.baidu.com/oauth/2.0/token', {
+                data: {
+                    grant_type: 'client_credentials',
+                    client_id: "NCwqRuOF1FIFn08u0hEbnQbY",
+                    client_secret: "y3qlD48qziNSkwnggI76G7CIYtH3otaw",
+                },
+                dataType: 'json', //服务器返回json格式数据
+                type: 'post', //HTTP请求类型
+                timeout: 10000, //超时时间设置为10秒；
+                //                 headers: {
+                //                     'Content-Type': 'application/json'
+                //                 },
+                success: function (data) {
+                    //服务器返回响应，根据响应结果，分析是否登录成功；
+                    console.log(JSON.stringify(data));
+
+                },
+                error: function (xhr, type, errorThrown) {
+                    //异常处理；
+                    console.log(type);
+                    console.log(errorThrown);
+                }
+            });
+        })
+    </script>
+</body>
+
+</html>
