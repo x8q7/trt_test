@@ -46,6 +46,37 @@
     <button id="btn_shibie">识别</button>
     <button id="btn_stop">停止</button>
     <script src="js/mui.js"></script>
+    <script type="text/javascript">
+        var btn_token = document.getElementById("btn_token");
+        var token_val = '';
+        //获取 success token ----- 
+        btn_token.addEventListener("tap", function () {
+            mui.ajax('https://openapi.baidu.com/oauth/2.0/token', {
+                data: {
+                    //                     grant_type: 'client_credentials',
+                    //                     client_id: "NCwqRuOF1FIFn08u0hEbnQbY",
+                    //                     client_secret: "y3qlD48qziNSkwnggI76G7CIYtH3otaw",
+                    grant_type: "client_credentials",
+                    client_id: "o7vZpse3Wo0gjMdXhLYjyLEP",
+                    client_secret: "dsO7apQQ0jG2LjgBstIqw92dMsiq5bY2",
+                },
+                dataType: 'json', //服务器返回json格式数据
+                type: 'post', //HTTP请求类型
+                timeout: 10000, //超时时间设置为10秒；
+                success: function (data) {
+                    //服务器返回响应，根据响应结果，分析是否登录成功；
+                    token_val = JSON.stringify(data.access_token);
+                    console.log(token_val);
+
+                },
+                error: function (xhr, type, errorThrown) {
+                    //异常处理；
+                    console.log(type);
+                    console.log(errorThrown);
+                }
+            });
+        })
+    </script>
     <script type="text/javascript" charset="utf-8">
         mui.init({
             gestureConfig: {
@@ -59,7 +90,6 @@
             }
         });
 
-        var btn_token = document.getElementById("btn_token");
         var btn_shibie = document.getElementById("btn_shibie");
         var btn_stop = document.getElementById("btn_stop");
 
@@ -82,7 +112,8 @@
             r.record({
                 filename: "_doc/audio/"
             }, function (path) {
-                var arr = Audio2dataURL(path);
+                console.log("正在识别。。。");
+                Audio2dataURL(path);
                 console.log("Audio record success!");
             }, function (e) {
                 console.log("Audio record failed: " + e.message);
@@ -97,29 +128,44 @@
          * @param {Object} path
          */
         function Audio2dataURL(path) {
-            var urlArr = [];
+            var urlArr;
             plus.io.resolveLocalFileSystemURL(path, function (entry) {
                 entry.file(function (file) {
                     var reader = new plus.io.FileReader();
+                    var urlSize = file.size;
+                    console.log(urlSize);
                     reader.onloadend = function (e) {
                         var urlStr = e.target.result;
-                        console.log(urlStr);
-                        urlArr = urlStr.split(",");
+                        urlArr = urlStr.split(",")[1];
+                        console.log(urlArr);
+                        sendBaseUrl(urlArr, urlSize, token_val);
                     };
                     reader.readAsDataURL(file);
                 }, function (e) {
                     mui.toast("读写出现异常: " + e.message);
                 })
             })
-            return urlArr;
+
         }
+
         // 将base64 传给服务器，进行识别
-        function sendBaseUrl() {
-            mui.ajax('http://vop.baidu.com/server_api', {
+        function sendBaseUrl(speechUrl, urlSize, token_val) {
+			console.log(token_val);
+            console.log("正在发送请求。。。");
+            mui.ajax('https://vop.baidu.com/server_api', {
                 data: {
-                    grant_type: 'client_credentials',
-                    client_id: "NCwqRuOF1FIFn08u0hEbnQbY",
-                    client_secret: "y3qlD48qziNSkwnggI76G7CIYtH3otaw",
+                    "format": "amr",
+                    "rate": 16000,
+                    "dev_pid": 1536,
+                    "channel": 1,
+                    "cuid": "862989030544150",
+                    
+                    "speech": speechUrl,
+                    "len": urlSize,
+					"token": token_val,
+                },
+                headers: {
+                    'Content-Type': 'application/json'
                 },
                 dataType: 'json', //服务器返回json格式数据
                 type: 'post', //HTTP请求类型
@@ -127,13 +173,14 @@
                 success: function (data) {
                     //服务器返回响应，根据响应结果，分析是否登录成功；
                     console.log("识别success");
+                    console.log(JSON.stringify(data));
 
                 },
                 error: function (xhr, type, errorThrown) {
                     //异常处理；
                     console.log(type);
                     console.log(errorThrown);
-					console.log("识别fail");
+                    console.log("识别fail");
                 }
             });
         }
@@ -147,33 +194,6 @@
         btn_stop.addEventListener("tap", function () {
             stopRecord();
             console.log("audio_stop");
-        })
-
-        //获取 success token ----- 
-        btn_token.addEventListener("tap", function () {
-            mui.ajax('https://openapi.baidu.com/oauth/2.0/token', {
-                data: {
-                    grant_type: 'client_credentials',
-                    client_id: "NCwqRuOF1FIFn08u0hEbnQbY",
-                    client_secret: "y3qlD48qziNSkwnggI76G7CIYtH3otaw",
-                },
-                dataType: 'json', //服务器返回json格式数据
-                type: 'post', //HTTP请求类型
-                timeout: 10000, //超时时间设置为10秒；
-                //                 headers: {
-                //                     'Content-Type': 'application/json'
-                //                 },
-                success: function (data) {
-                    //服务器返回响应，根据响应结果，分析是否登录成功；
-                    console.log(JSON.stringify(data));
-
-                },
-                error: function (xhr, type, errorThrown) {
-                    //异常处理；
-                    console.log(type);
-                    console.log(errorThrown);
-                }
-            });
         })
     </script>
 </body>
