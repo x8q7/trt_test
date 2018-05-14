@@ -207,5 +207,27 @@
                 }
             }
         }
-    }
+    },
+	"dependencies": {
+		"pages": {
+			"index.html": {
+				"resources": [],
+				"refer": [
+					"speech_recognition.html"
+				],
+				"priority": 0
+			}
+		},
+		"idle": {
+			"resources": [
+				"speech_synthesis.html",
+				"js/mui.min.js",
+				"fonts/mui.ttf",
+				"css/mui.min.css",
+				"js/mui.js",
+				"css/mui.css",
+				"README.md"
+			]
+		}
+	}
 }
