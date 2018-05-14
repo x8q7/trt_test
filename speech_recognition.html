@@ -68,7 +68,7 @@
                 success: function (data) {
                     //服务器返回响应，根据响应结果，分析是否登录成功；
                     console.log("获取token success----");
-                    token_val = JSON.stringify(data.access_token);
+                    token_val = data.access_token;
                     console.log(token_val);
 
                 },
@@ -107,6 +107,7 @@
         function onPlusReady() {
             r = plus.audio.getRecorder();
             uuId = plus.device.imei;
+			console.log(uuId);
         }
 
         function startRecord() {
@@ -164,10 +165,10 @@
             mui.ajax('https://vop.baidu.com/server_api', {
                 data: {
                     "format": "amr",
-                    "rate": 16000,
+                    "rate": 8000,
                     "dev_pid": 1536,
                     "channel": 1,
-                    "cuid": uuId,
+                    "cuid": "862989030377502,862989030544150",
                     "speech": speechUrl,
                     "len": urlSize,
                     "token": token_val,
